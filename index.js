@@ -163,6 +163,12 @@ client.on('guildMemberAdd', async (member) => {
 
   // Membro humano — boas-vindas
   await recepcionarMembro(member);
+
+  // Envia anúncio DM ativo (se houver)
+  const dmAtivo = anuncioSub.getAnuncioDMAtivo();
+  if (dmAtivo) {
+    try { await member.send({ embeds: [dmAtivo.embed] }); } catch { /* DMs fechadas */ }
+  }
   // Atualiza canal de contagem
   const { atualizarMembros } = require('./menu/canalStatusHandler');
   atualizarMembros(member.guild);
@@ -230,7 +236,8 @@ client.on('interactionCreate', async (interaction) => {
         case 'an_botao4':   return anuncioSub.modalBotao(interaction, 4);
         case 'an_botao5':   return anuncioSub.modalBotao(interaction, 5);
         case 'an_publicar': return anuncioSub.publicar(interaction);
-        case 'an_dm':       return anuncioSub.enviarDM(interaction);
+        case 'an_dm':           return anuncioSub.enviarDM(interaction);
+        case 'an_dm_desativar': return anuncioSub.desativarDM(interaction);
         case 'an_cancelar': return anuncioSub.cancelar(interaction);
       }
     }

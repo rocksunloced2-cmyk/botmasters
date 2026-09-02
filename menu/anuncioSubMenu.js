@@ -6,6 +6,12 @@ const {
 const sessao          = require('./anuncioSessao');
 const { rowTraduzir } = require('./traduzirHandler');
 
+// ─── Anúncio DM ativo (em memória — enviado para novos membros) ───────────────
+let anuncioDMAtivo = null; // { embed, ativadoPor, ativadoEm }
+
+function getAnuncioDMAtivo() { return anuncioDMAtivo; }
+function limparAnuncioDMAtivo() { anuncioDMAtivo = null; }
+
 function infoBtn(b) {
   if (!b) return '_não configurado_';
   return `**${b.nome}**\n${b.url.length > 50 ? b.url.slice(0, 50) + '...' : b.url}`;
@@ -322,20 +328,44 @@ async function enviarDM(interaction) {
     .setTitle('📨 DM em Massa Concluída!')
     .setColor(erros === total ? 0xED4245 : enviados > 0 ? 0x57F287 : 0xFEE75C)
     .addFields(
-      { name: '✅ Enviados',  value: `**${enviados}**`,  inline: true },
-      { name: '❌ Erros',     value: `**${erros}**`,     inline: true },
-      { name: '📊 Total',     value: `**${total}**`,     inline: true },
+      { name: '✅ Enviados',        value: `**${enviados}**`,  inline: true },
+      { name: '❌ Erros',           value: `**${erros}**`,     inline: true },
+      { name: '📊 Total',           value: `**${total}**`,     inline: true },
       { name: '📈 Taxa de sucesso', value: `**${total > 0 ? ((enviados / total) * 100).toFixed(1) : 0}%**`, inline: true },
+      { name: '🔔 Novos membros',   value: 'Ativo — novos membros receberão este anúncio automaticamente.', inline: false },
     )
     .setDescription(erros > 0 ? `_${erros} membro(s) com DMs fechadas ou bloquearam o bot._` : '✅ Todos os membros receberam!')
     .setTimestamp();
 
-  await interaction.editReply({ embeds: [embedFinal] });
+  // Ativa o anúncio para novos membros
+  anuncioDMAtivo = { embed, ativadoPor: interaction.user.tag, ativadoEm: Date.now() };
+
+  const rowDesativar = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('an_dm_desativar')
+      .setLabel('🔕 Parar de enviar para novos membros')
+      .setStyle(ButtonStyle.Danger),
+  );
+
+  await interaction.editReply({ embeds: [embedFinal], components: [rowDesativar] });
+}
+
+// ─── Desativar DM para novos membros ─────────────────────────────────────────
+async function desativarDM(interaction) {
+  anuncioDMAtivo = null;
+  await interaction.update({
+    embeds: [new EmbedBuilder()
+      .setTitle('🔕 DM para novos membros desativada')
+      .setDescription('Novos membros não receberão mais este anúncio.')
+      .setColor(0x95A5A6)],
+    components: [],
+  });
 }
 
 module.exports = {
   enviarSubMenu,
   modalCanal, modalTitulo, modalConteudo, modalImagem, modalBotao,
   processarCanal, processarTitulo, processarConteudo, processarImagem, processarBotao,
-  publicar, cancelar, enviarDM,
+  publicar, cancelar, enviarDM, desativarDM,
+  getAnuncioDMAtivo,
 };
