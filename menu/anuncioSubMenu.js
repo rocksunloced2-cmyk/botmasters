@@ -28,7 +28,7 @@ async function enviarSubMenu(interaction, editar = false) {
     .setTitle('📢 Configurar Anúncio')
     .setDescription(
       'Preencha as seções abaixo e clique em **Publicar** quando estiver pronto.\n' +
-      '> Canal, Título e Conteúdo são obrigatórios.'
+      '> Canal e Título são obrigatórios. Conteúdo é opcional.'
     )
     .setColor(s.cor ? parseInt(s.cor.replace('#', ''), 16) : 0x5865F2)
     .addFields(
@@ -118,8 +118,8 @@ async function modalConteudo(interaction) {
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
-        .setCustomId('descricao').setLabel('Conteúdo / descrição')
-        .setStyle(TextInputStyle.Paragraph).setMaxLength(2000).setRequired(true)
+        .setCustomId('descricao').setLabel('Conteúdo / descrição (opcional)')
+        .setStyle(TextInputStyle.Paragraph).setMaxLength(2000).setRequired(false)
         .setValue(s.descricao ?? '')
     ),
   );
@@ -258,12 +258,13 @@ async function publicar(interaction) {
   // Embed
   const embed = new EmbedBuilder()
     .setTitle(s.titulo)
-    .setDescription(s.descricao)
     .setColor(cor)
     .setTimestamp()
     .setFooter({ text: `Anúncio por ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
+  if (s.descricao) embed.setDescription(s.descricao);
   if (s.imagem) embed.setImage(s.imagem);
+  if (s.descricao) embed.setDescription(s.descricao);
 
   // Botões de link individuais
   const botoesLink = [];

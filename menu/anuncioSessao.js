@@ -46,7 +46,7 @@ function nova(userId) {
 function podePublicar(userId) {
   const s = obter(userId);
   if (!s) return false;
-  return !!(s.canal && s.titulo && s.descricao);
+  return !!(s.canal && s.titulo);
 }
 
 module.exports = { obter, salvar, atualizar, limpar, nova, podePublicar };
