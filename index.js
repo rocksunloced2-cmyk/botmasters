@@ -230,6 +230,7 @@ client.on('interactionCreate', async (interaction) => {
         case 'an_botao4':   return anuncioSub.modalBotao(interaction, 4);
         case 'an_botao5':   return anuncioSub.modalBotao(interaction, 5);
         case 'an_publicar': return anuncioSub.publicar(interaction);
+        case 'an_dm':       return anuncioSub.enviarDM(interaction);
         case 'an_cancelar': return anuncioSub.cancelar(interaction);
       }
     }

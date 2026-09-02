@@ -66,6 +66,10 @@ async function enviarSubMenu(interaction, editar = false) {
       .setLabel('🚀 Publicar Anúncio')
       .setStyle(podePub ? ButtonStyle.Success : ButtonStyle.Secondary)
       .setDisabled(!podePub),
+    new ButtonBuilder().setCustomId('an_dm')
+      .setLabel('📨 Enviar por DM')
+      .setStyle(podePub ? ButtonStyle.Primary : ButtonStyle.Secondary)
+      .setDisabled(!podePub),
     new ButtonBuilder().setCustomId('an_cancelar')
       .setLabel('🗑️ Cancelar')
       .setStyle(ButtonStyle.Danger),
@@ -248,9 +252,90 @@ async function cancelar(interaction) {
   });
 }
 
+// ─── Enviar por DM em massa ───────────────────────────────────────────────────
+async function enviarDM(interaction) {
+  const uid = interaction.user.id;
+  const s   = sessao.obter(uid);
+  if (!sessao.podePublicar(uid)) return interaction.reply({ content: '❌ Preencha Canal e Título.', flags: 64 });
+
+  await interaction.deferReply({ flags: 64 });
+
+  // Monta o embed do anúncio
+  let cor = 0xFFD700;
+  if (s.cor) { try { cor = parseInt(s.cor.replace('#', ''), 16); } catch {} }
+
+  const embed = new EmbedBuilder()
+    .setTitle(s.titulo)
+    .setColor(cor)
+    .setTimestamp()
+    .setFooter({ text: `Anúncio por ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+
+  if (s.descricao) embed.setDescription(s.descricao);
+  if (s.imagem)    embed.setImage(s.imagem);
+
+  // Busca todos os membros humanos
+  await interaction.guild.members.fetch();
+  const membros = interaction.guild.members.cache.filter(m => !m.user.bot);
+  const total   = membros.size;
+
+  let enviados  = 0;
+  let erros     = 0;
+  let pendentes = total;
+
+  // Mensagem de progresso inicial
+  const embedProgresso = () => new EmbedBuilder()
+    .setTitle('📨 Enviando DMs...')
+    .setColor(0x5865F2)
+    .addFields(
+      { name: '✅ Enviados',  value: `${enviados}`,  inline: true },
+      { name: '❌ Erros',     value: `${erros}`,      inline: true },
+      { name: '⏳ Pendentes', value: `${pendentes}`,  inline: true },
+      { name: '📊 Total',     value: `${total}`,      inline: true },
+      { name: '📈 Taxa',      value: `${total > 0 ? ((enviados / total) * 100).toFixed(1) : 0}%`, inline: true },
+    )
+    .setTimestamp();
+
+  await interaction.editReply({ embeds: [embedProgresso()] });
+
+  // Envia em lotes para não travar
+  const lista = [...membros.values()];
+  for (let i = 0; i < lista.length; i++) {
+    try {
+      await lista[i].send({ embeds: [embed] });
+      enviados++;
+    } catch {
+      erros++;
+    }
+    pendentes--;
+
+    // Atualiza o progresso a cada 10 envios
+    if ((i + 1) % 10 === 0 || i === lista.length - 1) {
+      await interaction.editReply({ embeds: [embedProgresso()] }).catch(() => {});
+    }
+
+    // Pequena pausa para não bater rate limit do Discord
+    if ((i + 1) % 30 === 0) await new Promise(r => setTimeout(r, 1000));
+  }
+
+  // Resultado final
+  const embedFinal = new EmbedBuilder()
+    .setTitle('📨 DM em Massa Concluída!')
+    .setColor(erros === total ? 0xED4245 : enviados > 0 ? 0x57F287 : 0xFEE75C)
+    .addFields(
+      { name: '✅ Enviados',  value: `**${enviados}**`,  inline: true },
+      { name: '❌ Erros',     value: `**${erros}**`,     inline: true },
+      { name: '📊 Total',     value: `**${total}**`,     inline: true },
+      { name: '📈 Taxa de sucesso', value: `**${total > 0 ? ((enviados / total) * 100).toFixed(1) : 0}%**`, inline: true },
+    )
+    .setDescription(erros > 0 ? `_${erros} membro(s) com DMs fechadas ou bloquearam o bot._` : '✅ Todos os membros receberam!')
+    .setTimestamp();
+
+  await interaction.editReply({ embeds: [embedFinal] });
+}
+
 module.exports = {
   enviarSubMenu,
   modalCanal, modalTitulo, modalConteudo, modalImagem, modalBotao,
   processarCanal, processarTitulo, processarConteudo, processarImagem, processarBotao,
-  publicar, cancelar,
+  publicar, cancelar, enviarDM,
 };
