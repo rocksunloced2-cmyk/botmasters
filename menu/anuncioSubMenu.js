@@ -1,24 +1,17 @@
 const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ChannelType,
+  EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle,
+  ModalBuilder, TextInputBuilder, TextInputStyle, ChannelType,
 } = require('discord.js');
 
 const sessao          = require('./anuncioSessao');
 const { rowTraduzir } = require('./traduzirHandler');
 
-// ─── Helper: exibe info de um botão salvo ─────────────────────────────────────
 function infoBtn(b) {
   if (!b) return '_não configurado_';
-  return `**${b.nome}**\n${b.url.slice(0, 40)}...\n${b.cor ? `cor: \`${b.cor}\`` : ''}`;
+  return `**${b.nome}**\n${b.url.length > 50 ? b.url.slice(0, 50) + '...' : b.url}`;
 }
 
-// ─── Monta e envia/atualiza o sub-menu ───────────────────────────────────────
+// ─── Sub-menu ─────────────────────────────────────────────────────────────────
 async function enviarSubMenu(interaction, editar = false) {
   const uid = interaction.user.id;
   const s   = sessao.obter(uid) ?? sessao.nova(uid);
@@ -27,19 +20,21 @@ async function enviarSubMenu(interaction, editar = false) {
   const embed = new EmbedBuilder()
     .setTitle('📢 Configurar Anúncio')
     .setDescription(
-      'Preencha as seções abaixo e clique em **Publicar** quando estiver pronto.\n' +
-      '> Canal e Título são obrigatórios. Conteúdo é opcional.'
+      'Preencha as seções e clique em **Publicar** quando estiver pronto.\n' +
+      '> Canal e Título são obrigatórios. O resto é opcional.'
     )
     .setColor(s.cor ? parseInt(s.cor.replace('#', ''), 16) : 0x5865F2)
     .addFields(
-      { name: `${ok(s.canal)} Canal`,      value: s.canal     ? `<#${s.canal}>` : '_não definido_',                                                 inline: true  },
-      { name: `${ok(s.titulo)} Título`,    value: s.titulo    ? `**${s.titulo}**` : '_não definido_',                                               inline: true  },
-      { name: `${ok(s.cor)} Cor`,          value: s.cor       ? `\`${s.cor}\`` : '_padrão #FFD700_',                                                inline: true  },
+      { name: `${ok(s.canal)} Canal`,      value: s.canal     ? `<#${s.canal}>` : '_não definido_',                                                      inline: true  },
+      { name: `${ok(s.titulo)} Título`,    value: s.titulo    ? `**${s.titulo}**` : '_não definido_',                                                    inline: true  },
+      { name: `${ok(s.cor)} Cor`,          value: s.cor       ? `\`${s.cor}\`` : '_padrão #FFD700_',                                                     inline: true  },
       { name: `${ok(s.descricao)} Conteúdo`, value: s.descricao ? s.descricao.slice(0, 80) + (s.descricao.length > 80 ? '...' : '') : '_não definido_', inline: false },
-      { name: `${ok(s.imagem)} Imagem`,    value: s.imagem    ? `[ver imagem](${s.imagem})` : '_não definida_',                                     inline: true  },
-      { name: `${ok(s.botao1)} Botão 1`,   value: infoBtn(s.botao1),                                                                                inline: true  },
-      { name: `${ok(s.botao2)} Botão 2`,   value: infoBtn(s.botao2),                                                                                inline: true  },
-      { name: `${ok(s.botao3)} Botão 3`,   value: infoBtn(s.botao3),                                                                                inline: true  },
+      { name: `${ok(s.imagem)} Imagem`,    value: s.imagem    ? `[ver imagem](${s.imagem})` : '_não definida_',                                          inline: true  },
+      { name: `${ok(s.botao1)} Botão 1`,   value: infoBtn(s.botao1), inline: true },
+      { name: `${ok(s.botao2)} Botão 2`,   value: infoBtn(s.botao2), inline: true },
+      { name: `${ok(s.botao3)} Botão 3`,   value: infoBtn(s.botao3), inline: true },
+      { name: `${ok(s.botao4)} Botão 4`,   value: infoBtn(s.botao4), inline: true },
+      { name: `${ok(s.botao5)} Botão 5`,   value: infoBtn(s.botao5), inline: true },
     )
     .setFooter({ text: 'Sessão expira em 30 min de inatividade' });
 
@@ -47,19 +42,25 @@ async function enviarSubMenu(interaction, editar = false) {
 
   const podePub = sessao.podePublicar(uid);
 
+  // Row 1: configurações principais
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('an_canal')    .setLabel('📡 Canal')       .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('an_titulo')   .setLabel('✏️ Título e Cor').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('an_conteudo') .setLabel('📝 Conteúdo')    .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('an_imagem')   .setLabel('🖼️ Imagem')      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('an_canal')    .setLabel('📡 Canal')        .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('an_titulo')   .setLabel('✏️ Título e Cor') .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('an_conteudo') .setLabel('📝 Conteúdo')     .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('an_imagem')   .setLabel('🖼️ Imagem')       .setStyle(ButtonStyle.Secondary),
   );
 
+  // Row 2: 5 botões de link
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('an_botao1').setLabel('🔗 Botão 1').setStyle(s.botao1 ? ButtonStyle.Success : ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('an_botao2').setLabel('🔗 Botão 2').setStyle(s.botao2 ? ButtonStyle.Success : ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('an_botao3').setLabel('🔗 Botão 3').setStyle(s.botao3 ? ButtonStyle.Success : ButtonStyle.Secondary),
+    ...[1,2,3,4,5].map(n =>
+      new ButtonBuilder()
+        .setCustomId(`an_botao${n}`)
+        .setLabel(`🔗 Botão ${n}`)
+        .setStyle(s[`botao${n}`] ? ButtonStyle.Success : ButtonStyle.Secondary)
+    )
   );
 
+  // Row 3: publicar e cancelar
   const row3 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('an_publicar')
       .setLabel('🚀 Publicar Anúncio')
@@ -75,35 +76,28 @@ async function enviarSubMenu(interaction, editar = false) {
   return interaction.reply({ ...payload, flags: 64 });
 }
 
-// ─── Modal: canal ─────────────────────────────────────────────────────────────
+// ─── Modals ───────────────────────────────────────────────────────────────────
 async function modalCanal(interaction) {
   const s = sessao.obter(interaction.user.id) ?? {};
   const modal = new ModalBuilder().setCustomId('anm_canal').setTitle('📡 Canal de Destino');
-  modal.addComponents(
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('canal_id').setLabel('ID do canal de destino')
-        .setStyle(TextInputStyle.Short).setRequired(true)
-        .setPlaceholder('Ex: 1234567890123456789').setValue(s.canal ?? '')
-    ),
-  );
+  modal.addComponents(new ActionRowBuilder().addComponents(
+    new TextInputBuilder().setCustomId('canal_id').setLabel('ID do canal de destino')
+      .setStyle(TextInputStyle.Short).setRequired(true)
+      .setPlaceholder('Ex: 1234567890123456789').setValue(s.canal ?? '')
+  ));
   await interaction.showModal(modal);
 }
 
-// ─── Modal: título e cor ──────────────────────────────────────────────────────
 async function modalTitulo(interaction) {
   const s = sessao.obter(interaction.user.id) ?? {};
   const modal = new ModalBuilder().setCustomId('anm_titulo').setTitle('✏️ Título e Cor');
   modal.addComponents(
     new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('titulo').setLabel('Título do anúncio')
-        .setStyle(TextInputStyle.Short).setMaxLength(256).setRequired(true)
-        .setValue(s.titulo ?? '')
+      new TextInputBuilder().setCustomId('titulo').setLabel('Título do anúncio')
+        .setStyle(TextInputStyle.Short).setMaxLength(256).setRequired(true).setValue(s.titulo ?? '')
     ),
     new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('cor').setLabel('Cor em hex (opcional, padrão: #FFD700)')
+      new TextInputBuilder().setCustomId('cor').setLabel('Cor em hex (opcional, padrão: #FFD700)')
         .setStyle(TextInputStyle.Short).setRequired(false)
         .setPlaceholder('#FFD700').setValue(s.cor ?? '')
     ),
@@ -111,76 +105,53 @@ async function modalTitulo(interaction) {
   await interaction.showModal(modal);
 }
 
-// ─── Modal: conteúdo ──────────────────────────────────────────────────────────
 async function modalConteudo(interaction) {
   const s = sessao.obter(interaction.user.id) ?? {};
   const modal = new ModalBuilder().setCustomId('anm_conteudo').setTitle('📝 Conteúdo do Anúncio');
-  modal.addComponents(
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('descricao').setLabel('Conteúdo / descrição (opcional)')
-        .setStyle(TextInputStyle.Paragraph).setMaxLength(2000).setRequired(false)
-        .setValue(s.descricao ?? '')
-    ),
-  );
+  modal.addComponents(new ActionRowBuilder().addComponents(
+    new TextInputBuilder().setCustomId('descricao').setLabel('Conteúdo / descrição (opcional)')
+      .setStyle(TextInputStyle.Paragraph).setMaxLength(2000).setRequired(false)
+      .setValue(s.descricao ?? '')
+  ));
   await interaction.showModal(modal);
 }
 
-// ─── Modal: imagem ────────────────────────────────────────────────────────────
 async function modalImagem(interaction) {
   const s = sessao.obter(interaction.user.id) ?? {};
   const modal = new ModalBuilder().setCustomId('anm_imagem').setTitle('🖼️ Imagem do Anúncio');
-  modal.addComponents(
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('imagem').setLabel('URL da imagem (vazio = remover)')
-        .setStyle(TextInputStyle.Paragraph).setMaxLength(512).setRequired(false)
-        .setPlaceholder('https://cdn.discordapp.com/...').setValue(s.imagem ?? '')
-    ),
-  );
+  modal.addComponents(new ActionRowBuilder().addComponents(
+    new TextInputBuilder().setCustomId('imagem').setLabel('URL da imagem (vazio = remover)')
+      .setStyle(TextInputStyle.Paragraph).setMaxLength(512).setRequired(false)
+      .setPlaceholder('https://cdn.discordapp.com/...').setValue(s.imagem ?? '')
+  ));
   await interaction.showModal(modal);
 }
 
-// ─── Modal: botão individual (1, 2 ou 3) ─────────────────────────────────────
 async function modalBotao(interaction, num) {
-  const s   = sessao.obter(interaction.user.id) ?? {};
-  const key = `botao${num}`;
-  const b   = s[key] ?? {};
-
-  const modal = new ModalBuilder()
-    .setCustomId(`anm_botao${num}`)
-    .setTitle(`🔗 Botão ${num}`);
-
+  const s = sessao.obter(interaction.user.id) ?? {};
+  const b = s[`botao${num}`] ?? {};
+  const modal = new ModalBuilder().setCustomId(`anm_botao${num}`).setTitle(`🔗 Botão ${num}`);
   modal.addComponents(
     new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('nome').setLabel('Nome do botão')
+      new TextInputBuilder().setCustomId('nome').setLabel('Nome do botão')
         .setStyle(TextInputStyle.Short).setMaxLength(80).setRequired(true)
         .setPlaceholder('Ex: Entrar no servidor').setValue(b.nome ?? '')
     ),
     new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('url').setLabel('Link (URL)')
+      new TextInputBuilder().setCustomId('url').setLabel('Link (URL)')
         .setStyle(TextInputStyle.Paragraph).setMaxLength(512).setRequired(true)
         .setPlaceholder('https://...').setValue(b.url ?? '')
     ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('cor').setLabel('Cor do botão em hex (opcional)')
-        .setStyle(TextInputStyle.Short).setRequired(false)
-        .setPlaceholder('#5865F2 (deixe vazio para cinza padrão)').setValue(b.cor ?? '')
-    ),
   );
-
   await interaction.showModal(modal);
 }
 
-// ─── Processar modals ─────────────────────────────────────────────────────────
+// ─── Processadores ────────────────────────────────────────────────────────────
 async function processarCanal(interaction) {
   const canalId = interaction.fields.getTextInputValue('canal_id').trim();
   const canal   = interaction.guild.channels.cache.get(canalId);
   if (!canal || canal.type !== ChannelType.GuildText) {
-    return interaction.reply({ content: `❌ Canal \`${canalId}\` não encontrado ou não é de texto.`, flags: 64 });
+    return interaction.reply({ content: `❌ Canal \`${canalId}\` não encontrado.`, flags: 64 });
   }
   sessao.atualizar(interaction.user.id, { canal: canalId });
   await enviarSubMenu(interaction, true);
@@ -199,63 +170,39 @@ async function processarTitulo(interaction) {
 }
 
 async function processarConteudo(interaction) {
-  const descricao = interaction.fields.getTextInputValue('descricao').trim();
+  const descricao = interaction.fields.getTextInputValue('descricao').trim() || null;
   sessao.atualizar(interaction.user.id, { descricao });
   await enviarSubMenu(interaction, true);
 }
 
 async function processarImagem(interaction) {
   const imagem = interaction.fields.getTextInputValue('imagem').trim() || null;
-  if (imagem) {
-    try { new URL(imagem); } catch {
-      return interaction.reply({ content: '❌ URL inválida. Deve começar com `https://`', flags: 64 });
-    }
-  }
+  if (imagem) { try { new URL(imagem); } catch { return interaction.reply({ content: '❌ URL inválida.', flags: 64 }); } }
   sessao.atualizar(interaction.user.id, { imagem });
   await enviarSubMenu(interaction, true);
 }
 
 async function processarBotao(interaction, num) {
-  const nome   = interaction.fields.getTextInputValue('nome').trim();
-  const url    = interaction.fields.getTextInputValue('url').trim();
-  const corRaw = interaction.fields.getTextInputValue('cor').trim();
-
-  // Valida URL
-  try { new URL(url); } catch {
-    return interaction.reply({ content: '❌ URL inválida. Deve começar com `https://`', flags: 64 });
-  }
-  if (url.length > 512) {
-    return interaction.reply({ content: '❌ URL muito longa (máximo 512 caracteres).', flags: 64 });
-  }
-
-  // Valida cor opcional
-  let cor = null;
-  if (corRaw) {
-    const hex = corRaw.replace('#', '');
-    if (/^[0-9a-fA-F]{3,6}$/.test(hex)) cor = `#${hex}`;
-  }
-
-  sessao.atualizar(interaction.user.id, { [`botao${num}`]: { nome, url, cor } });
+  const nome = interaction.fields.getTextInputValue('nome').trim();
+  const url  = interaction.fields.getTextInputValue('url').trim();
+  try { new URL(url); } catch { return interaction.reply({ content: '❌ URL inválida.', flags: 64 }); }
+  if (url.length > 512) return interaction.reply({ content: '❌ URL muito longa (máx 512 chars).', flags: 64 });
+  sessao.atualizar(interaction.user.id, { [`botao${num}`]: { nome, url } });
   await enviarSubMenu(interaction, true);
 }
 
-// ─── Publicar anúncio ─────────────────────────────────────────────────────────
+// ─── Publicar ─────────────────────────────────────────────────────────────────
 async function publicar(interaction) {
   const uid = interaction.user.id;
   const s   = sessao.obter(uid);
-
-  if (!sessao.podePublicar(uid)) {
-    return interaction.reply({ content: '❌ Preencha pelo menos Canal, Título e Conteúdo.', flags: 64 });
-  }
+  if (!sessao.podePublicar(uid)) return interaction.reply({ content: '❌ Preencha Canal e Título.', flags: 64 });
 
   const canal = interaction.guild.channels.cache.get(s.canal);
   if (!canal) return interaction.reply({ content: '❌ Canal não encontrado.', flags: 64 });
 
-  // Cor do embed
   let cor = 0xFFD700;
-  if (s.cor) { try { cor = parseInt(s.cor.replace('#', ''), 16); } catch { /* padrão */ } }
+  if (s.cor) { try { cor = parseInt(s.cor.replace('#', ''), 16); } catch {} }
 
-  // Embed
   const embed = new EmbedBuilder()
     .setTitle(s.titulo)
     .setColor(cor)
@@ -263,22 +210,14 @@ async function publicar(interaction) {
     .setFooter({ text: `Anúncio por ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
   if (s.descricao) embed.setDescription(s.descricao);
-  if (s.imagem) embed.setImage(s.imagem);
-  if (s.descricao) embed.setDescription(s.descricao);
+  if (s.imagem)    embed.setImage(s.imagem);
 
-  // Botões de link individuais
+  // Monta botões de link (até 5 numa row)
   const botoesLink = [];
-  for (const key of ['botao1', 'botao2', 'botao3']) {
-    const b = s[key];
+  for (let n = 1; n <= 5; n++) {
+    const b = s[`botao${n}`];
     if (!b?.nome || !b?.url) continue;
-    // Cor do botão: o Discord só suporta Link style (cinza) — cor hex não é suportada pela API
-    // mas guardamos para exibição no sub-menu
-    botoesLink.push(
-      new ButtonBuilder()
-        .setLabel(b.nome.slice(0, 80))
-        .setURL(b.url)
-        .setStyle(ButtonStyle.Link)
-    );
+    botoesLink.push(new ButtonBuilder().setLabel(b.nome.slice(0, 80)).setURL(b.url).setStyle(ButtonStyle.Link));
   }
 
   const components = [];
@@ -291,15 +230,12 @@ async function publicar(interaction) {
     await canal.send({ content: '@everyone', embeds: [embed], components });
     sessao.limpar(uid);
     await interaction.editReply({
-      embeds: [new EmbedBuilder()
-        .setTitle('✅ Anúncio Publicado!')
-        .setDescription(`O anúncio foi enviado em ${canal}!`)
-        .setColor(0x57F287)],
+      embeds: [new EmbedBuilder().setTitle('✅ Anúncio Publicado!').setDescription(`Enviado em ${canal}!`).setColor(0x57F287)],
       components: [],
     });
   } catch (err) {
     console.error('Erro ao publicar anúncio:', err.message);
-    await interaction.editReply({ content: `❌ Erro ao enviar: \`${err.message}\``, embeds: [], components: [] });
+    await interaction.editReply({ content: `❌ Erro: \`${err.message}\``, embeds: [], components: [] });
   }
 }
 
