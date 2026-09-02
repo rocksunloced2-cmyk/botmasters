@@ -227,6 +227,8 @@ client.on('interactionCreate', async (interaction) => {
         case 'an_botao1':   return anuncioSub.modalBotao(interaction, 1);
         case 'an_botao2':   return anuncioSub.modalBotao(interaction, 2);
         case 'an_botao3':   return anuncioSub.modalBotao(interaction, 3);
+        case 'an_botao4':   return anuncioSub.modalBotao(interaction, 4);
+        case 'an_botao5':   return anuncioSub.modalBotao(interaction, 5);
         case 'an_publicar': return anuncioSub.publicar(interaction);
         case 'an_cancelar': return anuncioSub.cancelar(interaction);
       }
@@ -294,6 +296,8 @@ client.on('interactionCreate', async (interaction) => {
         case 'anm_botao1':   return anuncioSub.processarBotao(interaction, 1);
         case 'anm_botao2':   return anuncioSub.processarBotao(interaction, 2);
         case 'anm_botao3':   return anuncioSub.processarBotao(interaction, 3);
+        case 'anm_botao4':   return anuncioSub.processarBotao(interaction, 4);
+        case 'anm_botao5':   return anuncioSub.processarBotao(interaction, 5);
       }
     }
 
