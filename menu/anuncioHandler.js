@@ -114,8 +114,12 @@ async function processarModal(interaction) {
 
       if (!nome || !url.startsWith('http')) continue;
 
-      // Valida URL
+      // Valida URL e limite de 512 chars
       try { new URL(url); } catch { continue; }
+      if (url.length > 512) {
+        console.warn(`[Anúncio] URL do botão muito longa (${url.length} chars), ignorada.`);
+        continue;
+      }
 
       if (botoesLink.length >= 3) continue;
 
