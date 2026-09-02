@@ -19,6 +19,7 @@ const { joinVoiceChannel, VoiceConnectionStatus, entersState } = require('@disco
 
 const { enviarMenu }                                  = require('./menu/menuPrincipal');
 const anuncio                                         = require('./menu/anuncioHandler');
+const anuncioSub                                      = require('./menu/anuncioSubMenu');
 const { abrirModalTrancar, abrirModalAbrir,
         processarTrancar,  processarAbrir,
         destravaBotao }                               = require('./menu/canalHandler');
@@ -201,7 +202,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.customId.startsWith('menu_')) {
       if (!temCargo(interaction)) return semPermissao(interaction);
       switch (interaction.customId) {
-        case 'menu_anuncio':          return anuncio.abrirModal(interaction);
+        case 'menu_anuncio':          return anuncioSub.enviarSubMenu(interaction);
         case 'menu_editar_anuncio':   return anuncio.abrirModalEdicao(interaction);
         case 'menu_sorteio':          return sub.enviarSubMenu(interaction);   // ← abre sub-menu
         case 'menu_trancar':          return abrirModalTrancar(interaction);
@@ -211,6 +212,20 @@ client.on('interactionCreate', async (interaction) => {
         case 'menu_bot_lista':        return bot.listar(interaction);
         case 'menu_usuario':          return usuario.abrirModal(interaction);
         case 'menu_stats':            return stats.mostrarStats(interaction);
+      }
+    }
+
+    // Sub-menu do anúncio (an_ = anuncio)
+    if (interaction.customId.startsWith('an_')) {
+      if (!temCargo(interaction)) return semPermissao(interaction);
+      switch (interaction.customId) {
+        case 'an_canal':    return anuncioSub.modalCanal(interaction);
+        case 'an_titulo':   return anuncioSub.modalTitulo(interaction);
+        case 'an_conteudo': return anuncioSub.modalConteudo(interaction);
+        case 'an_imagem':   return anuncioSub.modalImagem(interaction);
+        case 'an_botoes':   return anuncioSub.modalBotoes(interaction);
+        case 'an_publicar': return anuncioSub.publicar(interaction);
+        case 'an_cancelar': return anuncioSub.cancelar(interaction);
       }
     }
 
@@ -264,6 +279,18 @@ client.on('interactionCreate', async (interaction) => {
 
   // ── Modals ─────────────────────────────────────────────────────────────────
   if (interaction.isModalSubmit()) {
+
+    // Modals do sub-menu de anúncio
+    if (interaction.customId.startsWith('anm_')) {
+      if (!temCargo(interaction)) return semPermissao(interaction);
+      switch (interaction.customId) {
+        case 'anm_canal':    return anuncioSub.processarCanal(interaction);
+        case 'anm_titulo':   return anuncioSub.processarTitulo(interaction);
+        case 'anm_conteudo': return anuncioSub.processarConteudo(interaction);
+        case 'anm_imagem':   return anuncioSub.processarImagem(interaction);
+        case 'anm_botoes':   return anuncioSub.processarBotoes(interaction);
+      }
+    }
 
     // Modals do sub-menu de sorteio (não exigem cargo na resposta pois o
     // botão que os abriu já verificou — mas re-verifica por segurança)
