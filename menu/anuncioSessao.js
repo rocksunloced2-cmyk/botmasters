@@ -31,12 +31,14 @@ function limpar(userId) {
 
 function nova(userId) {
   salvar(userId, {
-    canal:    null,   // ID do canal
+    canal:    null,
     titulo:   null,
     descricao: null,
     imagem:   null,
-    cor:      null,   // hex string ex: #FF5733
-    botoes:   null,   // string com linhas "Nome -> URL"
+    cor:      null,
+    botao1:   null,   // { nome, url, cor }
+    botao2:   null,
+    botao3:   null,
   });
   return obter(userId);
 }
