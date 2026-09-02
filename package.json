@@ -1,0 +1,19 @@
+{
+  "name": "bot-mr-chefe",
+  "version": "1.0.0",
+  "description": "O chefe de todos os bots",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.18.0",
+    "discord-alt-detector": "^1.0.4",
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "opusscript": "^0.1.1"
+  }
+}
