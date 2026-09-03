@@ -42,6 +42,8 @@ const GUILD_ID         = '1522456699082903572';
 const VOICE_CHANNEL_ID = '1522518246694191284';
 const CARGO_CHEFE      = '1544859043871588402'; // 🔱 Super Owner
 const CARGO_OWNER      = '1522459532469469225'; // 👑 Owner
+
+// ─── Cliente ───────────────────────────────────────────────────────────────────
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
