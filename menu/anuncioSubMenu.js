@@ -288,6 +288,7 @@ async function enviarDM(interaction) {
   }
   const componentsDM = [];
   if (botoesLink.length) componentsDM.push(new ActionRowBuilder().addComponents(...botoesLink));
+  componentsDM.push(rowTraduzir('anuncio'));
 
   // Busca todos os membros humanos
   await interaction.guild.members.fetch();

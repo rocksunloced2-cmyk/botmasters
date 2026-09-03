@@ -55,9 +55,10 @@ async function processarTraducao(interaction) {
   const nomeIdioma = idiomaObj?.label ?? langCode;
 
   // Busca a mensagem original pelo ID guardado no customId
+  // Funciona tanto em canais de servidor quanto em DMs
   let embedOriginal = null;
   try {
-    const msgOriginal = await interaction.channel.messages.fetch(msgId);
+    const msgOriginal = await interaction.message.channel.messages.fetch(msgId);
     if (msgOriginal?.embeds?.length) {
       embedOriginal = msgOriginal.embeds[0];
     }
