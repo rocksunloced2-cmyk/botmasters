@@ -5,6 +5,7 @@ const {
 
 const sessao          = require('./anuncioSessao');
 const { rowTraduzir } = require('./traduzirHandler');
+const { podeDM }      = require('./anuncioSessao');
 
 // ─── Anúncio DM ativo (em memória — enviado para novos membros) ───────────────
 let anuncioDMAtivo = null; // { embed, ativadoPor, ativadoEm }
@@ -74,8 +75,8 @@ async function enviarSubMenu(interaction, editar = false) {
       .setDisabled(!podePub),
     new ButtonBuilder().setCustomId('an_dm')
       .setLabel('📨 Enviar por DM')
-      .setStyle(podePub ? ButtonStyle.Primary : ButtonStyle.Secondary)
-      .setDisabled(!podePub),
+      .setStyle(podeDM(uid) ? ButtonStyle.Primary : ButtonStyle.Secondary)
+      .setDisabled(!podeDM(uid)),
     new ButtonBuilder().setCustomId('an_cancelar')
       .setLabel('🗑️ Cancelar')
       .setStyle(ButtonStyle.Danger),
@@ -262,11 +263,10 @@ async function cancelar(interaction) {
 async function enviarDM(interaction) {
   const uid = interaction.user.id;
   const s   = sessao.obter(uid);
-  if (!sessao.podePublicar(uid)) return interaction.reply({ content: '❌ Preencha Canal e Título.', flags: 64 });
+  if (!podeDM(uid)) return interaction.reply({ content: '❌ Preencha pelo menos o Título.', flags: 64 });
 
   await interaction.deferReply({ flags: 64 });
 
-  // Monta o embed do anúncio
   let cor = 0xFFD700;
   if (s.cor) { try { cor = parseInt(s.cor.replace('#', ''), 16); } catch {} }
 
@@ -278,6 +278,16 @@ async function enviarDM(interaction) {
 
   if (s.descricao) embed.setDescription(s.descricao);
   if (s.imagem)    embed.setImage(s.imagem);
+
+  // Monta botões de link (igual ao publicar)
+  const botoesLink = [];
+  for (let n = 1; n <= 5; n++) {
+    const b = s[`botao${n}`];
+    if (!b?.nome || !b?.url) continue;
+    botoesLink.push(new ButtonBuilder().setLabel(b.nome.slice(0, 80)).setURL(b.url).setStyle(ButtonStyle.Link));
+  }
+  const componentsDM = [];
+  if (botoesLink.length) componentsDM.push(new ActionRowBuilder().addComponents(...botoesLink));
 
   // Busca todos os membros humanos
   await interaction.guild.members.fetch();
@@ -307,7 +317,7 @@ async function enviarDM(interaction) {
   const lista = [...membros.values()];
   for (let i = 0; i < lista.length; i++) {
     try {
-      await lista[i].send({ embeds: [embed] });
+      await lista[i].send({ embeds: [embed], components: componentsDM });
       enviados++;
     } catch {
       erros++;
@@ -337,8 +347,8 @@ async function enviarDM(interaction) {
     .setDescription(erros > 0 ? `_${erros} membro(s) com DMs fechadas ou bloquearam o bot._` : '✅ Todos os membros receberam!')
     .setTimestamp();
 
-  // Ativa o anúncio para novos membros
-  anuncioDMAtivo = { embed, ativadoPor: interaction.user.tag, ativadoEm: Date.now() };
+  // Ativa o anúncio para novos membros (com botões)
+  anuncioDMAtivo = { embed, components: componentsDM, ativadoPor: interaction.user.tag, ativadoEm: Date.now() };
 
   const rowDesativar = new ActionRowBuilder().addComponents(
     new ButtonBuilder()

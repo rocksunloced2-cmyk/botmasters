@@ -40,9 +40,8 @@ const { iniciarProtecao }                             = require('./menu/protecao
 // ─── Constantes ────────────────────────────────────────────────────────────────
 const GUILD_ID         = '1522456699082903572';
 const VOICE_CHANNEL_ID = '1522518246694191284';
-const CARGO_CHEFE      = '1522459532469469225';
-
-// ─── Cliente ───────────────────────────────────────────────────────────────────
+const CARGO_CHEFE      = '1544859043871588402'; // 🔱 Super Owner
+const CARGO_OWNER      = '1522459532469469225'; // 👑 Owner
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -77,7 +76,8 @@ async function registrarComandos() {
 
 // ─── Verifica cargo ────────────────────────────────────────────────────────────
 function temCargo(interaction) {
-  return interaction.member?.roles?.cache?.has(CARGO_CHEFE) ?? false;
+  return (interaction.member?.roles?.cache?.has(CARGO_CHEFE) ||
+          interaction.member?.roles?.cache?.has(CARGO_OWNER)) ?? false;
 }
 
 function semPermissao(interaction) {
@@ -167,7 +167,7 @@ client.on('guildMemberAdd', async (member) => {
   // Envia anúncio DM ativo (se houver)
   const dmAtivo = anuncioSub.getAnuncioDMAtivo();
   if (dmAtivo) {
-    try { await member.send({ embeds: [dmAtivo.embed] }); } catch { /* DMs fechadas */ }
+    try { await member.send({ embeds: [dmAtivo.embed], components: dmAtivo.components ?? [] }); } catch { /* DMs fechadas */ }
   }
   // Atualiza canal de contagem
   const { atualizarMembros } = require('./menu/canalStatusHandler');

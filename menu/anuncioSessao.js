@@ -36,4 +36,9 @@ function podePublicar(userId) {
   return !!(s?.canal && s?.titulo);
 }
 
-module.exports = { obter, salvar, atualizar, limpar, nova, podePublicar };
+function podeDM(userId) {
+  const s = obter(userId);
+  return !!(s?.titulo);
+}
+
+module.exports = { obter, salvar, atualizar, limpar, nova, podePublicar, podeDM };

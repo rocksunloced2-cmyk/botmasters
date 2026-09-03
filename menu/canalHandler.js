@@ -11,6 +11,7 @@ const {
 
 // ─── Cargos que podem destravar canais ────────────────────────────────────────
 const CARGOS_DESTRAVAR = [
+  '1544859043871588402', // 🔱 Super Owner
   '1522459532469469225', // 👑 Owner
   '1522458772801458236', // ⚙️ Administrador
   '1522459007854575697', // 🔨 Moderador
